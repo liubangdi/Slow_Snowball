@@ -1,75 +1,78 @@
 # 双均线策略
 # 策略逻辑：当五日均线与二十日均线金叉时买入，当五日均线与二十日均线死叉时卖出。
 
-import numpy as np
 import pandas as pd
 import datetime
-from datetime import date
 
 
-
-#初始化账户   
-def initialize(account):   
-    #get_iwencai('A股,股票简称不包含st,上市天数>200,交易状态包含交易') 
-    account.signal = False # 空仓信号
+# 初始化账户
+def initialize(account):
+    # get_iwencai('A股,股票简称不包含st,上市天数>200,交易状态包含交易')
+    account.signal = False  # 空仓信号
     account.b = True  # 买入信号
-    g.p=1
-    g.lista=[]
-    g.listb=[]
-    g.buyframe=pd.DataFrame()
+    g.p = 1
+    g.lista = []
+    g.listb = []
+    g.buyframe = pd.DataFrame()
     # 每月调仓
-    #try:
+    # try:
     #    g.buyframe=pd.read_csv('格氏A股选股结果更新.csv',index_col=0)
-    #    
-    #except:
+    #
+    # except:
     #    g.buyframe=pd.DataFrame()
-    #run_daily(func=check,reference_security='000001.SZ')
+    # run_daily(func=check,reference_security='000001.SZ')
     run_monthly(func=handle, date_rule=1, reference_security='000001.SZ')
-    #g.buyframe=pd.DataFrame()
-#设置买卖条件，每个交易频率（日/分钟/tick）调用一次
+    # g.buyframe=pd.DataFrame()
 
-def check(account,data):
+
+# 设置买卖条件，每个交易频率（日/分钟/tick）调用一次
+def check(account, data):
     # 止盈止损代码
     for stock in list(set(account.positions)):
-        # 持仓市值/持仓股数 - 成本价 / 成本价 = 持仓期间浮亏
-        rev=(account.positions[stock].position_value/account.positions[stock].total_amount-account.positions[stock].cost_basis)/account.positions[stock].cost_basis
-        #log.info(str(stock)+'至今盈利'+str(rev))
-        if rev> 0.10:
-            order_target_value(stock,0)
+        # (持仓市值/持仓股数 - 成本价) / 成本价 = 持仓期间浮亏
+        rev = (account.positions[stock].position_value /
+               account.positions[stock].total_amount -
+               account.positions[stock].cost_basis) /\
+               account.positions[stock].cost_basis
+        # log.info(str(stock)+'至今盈利'+str(rev))
+        if rev > 0.10:
+            order_target_value(stock, 0)
             log.info('止盈')
         elif rev < -0.05:
             # 股票仓位增加需要买入的比例
-            order_target_value(stock,account.positions[stock].position_value*2)
+            order_target_value(stock, account.positions[stock].position_value*2)
             log.info('止损')
 
-def handle(account,data):   
+
+def handle(account, data):
     if account.signal != 'PB_long':  # 如果不在PB长空仓期
         # 检测空仓信号
-        period, account.signal = MarketSignal(account)  
+        period, account.signal = MarketSignal(account)
         # 如果有空仓信号
-        if account.signal != False :
+        if account.signal is not False:
             # 更改买入信号为False
-            account.b = False 
+            account.b = False
             # 计算空仓结束时间
-            account.date = get_datetime()+ datetime.timedelta(days=period)
+            account.date = get_datetime() + datetime.timedelta(days=period)
             # 执行空仓
             for stock in list(account.positions.keys()):
-                order_target_value(stock,0)
+                order_target_value(stock, 0)
             # 输出信号
-            log.info( '空仓信号在' + get_datetime().strftime('%Y-%m-%d') + '触发，空仓'+ str(period) + '天')
+            log.info('空仓信号在' + get_datetime().strftime('%Y-%m-%d') +
+                     '触发，空仓' + str(period) + '天')
         
-        # 如果买入信号为假，现在日期大于空仓停止日期    
-    if account.b == False and get_datetime() > account.date:
+        # 如果买入信号为假，现在日期大于空仓停止日期
+    if account.b is False and get_datetime() > account.date:
         # 空仓期结束
         account.b = True  # 买入
-        account.signal = False # 无信号
+        account.signal = False  # 无信号
             
-    if account.b == True:  # 买入信号为真
-        buylist = GrahamStockFilter(account) 
-       
+    if account.b is True:  # 买入信号为真
+        buylist = GrahamStockFilter(account)
+
         for hold in list(account.positions):
-             if hold not in (list(buylist)) :
-                 order_target_value(hold, 0) 
+            if hold not in (list(buylist)):
+                 order_target_value(hold, 0)
         # 根据目标持仓权重，逐一委托下单
         for stock in buylist:
             order_target_percent(stock,1.0/(len(buylist)))

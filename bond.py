@@ -29,7 +29,7 @@ def handle(account,data):
     
     if account.signal != 'PB_long':  # 如果不在PB长空仓期
         # 检测空仓信号
-        period, account.signal = MarketSignal(account)  
+        period, account.signal = MarketSignal(account)
         # 如果有空仓信号
         if account.signal != False :
             # 更改买入信号为False

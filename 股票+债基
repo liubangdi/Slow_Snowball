@@ -19,15 +19,17 @@ def initialize(account):
     g.f_buylist = []      #债券基金买入列表
     g.f_signal = False    #债券基金调仓信号
     # 每月调仓
-    run_monthly(func=handle, date_rule=1, reference_security='000001.SZ')       #每月第一个交易日调用handle函数，以000001.SZ为参考标的
+    #每月第一个交易日调用handle函数，以000001.SZ为参考标的
+    run_monthly(func=handle, date_rule=1, reference_security='000001.SZ')       
 
 # 设置买卖条件，每个交易频率（日/分钟/tick）调用一次
 
 
 def handle(account, data):
-    yesterday = get_last_datetime().strftime('%Y%m%d')                          ##get_last_datetime()获取上一个交易日的时间信息
-                                                                                #strftime()将时间表示为可读字符串，‘%Y%m%d’表示转化为年（4位）+月（2位）+日
-
+     ##get_last_datetime()获取上一个交易日的时间信息
+     #strftime()将时间表示为可读字符串，‘%Y%m%d’表示转化为年（4位）+月（2位）+日
+    yesterday = get_last_datetime().strftime('%Y%m%d')                        
+                                                                              
     if account.signal != 'PB_long':        # 如果不在PB长空仓期
         # 检测空仓信号
         period, account.signal = MarketSignal(account)                          #MarketSignal定义在后边，择时函数判断是否进行空仓
